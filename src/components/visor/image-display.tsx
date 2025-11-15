@@ -47,6 +47,16 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
       return;
     }
     
+    // Si hay un punto activo sin especificación, eliminarlo
+    if (activePointId) {
+      // Buscar el punto activo para verificar si tiene especificación
+      const activePoint = points.find(point => point.id === activePointId);
+      // Solo eliminar si no tiene especificación (es temporal)
+      if (!activePoint?.specification) {
+        setPoints(prev => prev.filter(point => point.id !== activePointId));
+      }
+    }
+    
     const newPoint: Point = {
       id: Date.now(),
       x: Math.max(0, Math.min(100, x)),

@@ -1,13 +1,12 @@
 "use client";
 
 import { ImageDisplay } from "@/components/visor/image-display"
-import { CommentsPanel } from "@/components/visor/comments-panel"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 
 export default function VisorPage() {
-  const [showComments, setShowComments] = useState(true)
+  const [showSpecifications, setShowSpecifications] = useState(true)
 
   return (
     <div className="w-full h-screen p-0 m-0 overflow-hidden flex flex-col">
@@ -17,26 +16,21 @@ export default function VisorPage() {
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={() => setShowComments(!showComments)}
-          title={showComments ? "Ocultar comentarios" : "Mostrar comentarios"}
+          onClick={() => setShowSpecifications(!showSpecifications)}
+          title={showSpecifications ? "Ocultar especificaciones" : "Mostrar especificaciones"}
         >
-          {showComments ? <PanelLeftClose /> : <PanelLeftOpen />}
+          {showSpecifications ? <PanelLeftClose /> : <PanelLeftOpen />}
         </Button>
       </div>
 
       {/* Contenido principal */}
       <div className="flex flex-1 overflow-hidden">
         {/* Área de la imagen */}
-        <div className={`${showComments ? 'w-3/4' : 'w-full'} h-full transition-all duration-300`}>
-          <ImageDisplay />
+        <div className={`${showSpecifications ? 'w-full' : 'w-full'} h-full transition-all duration-300`}>
+          <ImageDisplay showSpecificationsPanel={showSpecifications} />
         </div>
 
-        {/* Panel de comentarios */}
-        {showComments && (
-          <div className="w-1/4 h-full border-l border-border bg-background">
-            <CommentsPanel />
-          </div>
-        )}
+        {/* Panel de especificaciones eliminado - ahora está integrado */}
       </div>
     </div>
   )

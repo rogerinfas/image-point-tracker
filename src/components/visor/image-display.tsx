@@ -20,7 +20,44 @@ interface ImageDisplayProps {
 export function ImageDisplay({
   showSpecificationsPanel = true,
 }: ImageDisplayProps) {
-  const [points, setPoints] = useState<Point[]>([]);
+  const [points, setPoints] = useState<Point[]>([
+    {
+      id: 1,
+      x: 25,
+      y: 30,
+      specification: "Pecho: 95cm\nContorno completo del pecho\nTomar con cinta métrica horizontal"
+    },
+    {
+      id: 2,
+      x: 75,
+      y: 30,
+      specification: "Espalda: 92cm\nAncho de espalda\nMedir de hombro a hombro"
+    },
+    {
+      id: 3,
+      x: 50,
+      y: 45,
+      specification: "Cintura: 78cm\nPunto más estrecho\nA nivel del ombligo"
+    },
+    {
+      id: 4,
+      x: 50,
+      y: 1,
+      specification: "Cadera: 102cm\nPunto más ancho\nA nivel de los glúteos"
+    },
+    {
+      id: 5,
+      x: 55,
+      y: 80,
+      specification: "Largo manga: 62cm\nDesde hombro hasta muñeca\nBrazo ligeramente doblado"
+    },
+    {
+      id: 6,
+      x: 70,
+      y: 80,
+      specification: "Largo total: 165cm\nDesde hombro hasta tobillo\nCon zapatos puestos"
+    }
+  ]);
   const [activePointId, setActivePointId] = useState<number | null>(null);
   const [tempSpecification, setTempSpecification] = useState("");
   const imageRef = useRef<HTMLDivElement>(null);
@@ -57,7 +94,7 @@ export function ImageDisplay({
     }
 
     const newPoint: Point = {
-      id: Date.now(),
+      id: Date.now() + Math.random(), // Ensure unique ID
       x: Math.max(0, Math.min(100, x)),
       y: Math.max(0, Math.min(100, y)),
     };

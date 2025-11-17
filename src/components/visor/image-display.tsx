@@ -70,7 +70,7 @@ export function ImageDisplay({
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     // Verificar si ya existe un punto cerca de esta posición
-    const minDistance = 1.5; // Distancia mínima en porcentaje
+    const minDistance = 1; // Distancia mínima en porcentaje(1 por defecto)
     const existingPoint = points.find((point) => {
       const distance = Math.sqrt(
         Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2)

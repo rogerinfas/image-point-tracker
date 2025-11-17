@@ -19,33 +19,21 @@ const SEED_POINTS: Point[] = [
   },
   {
     id: 2,
-    x: 75,
+    x: 77,
     y: 30,
     specification: "Espalda: 92cm\nAncho de espalda\nMedir de hombro a hombro"
   },
   {
     id: 3,
-    x: 50,
-    y: 45,
+    x: 80,
+    y: 62,
     specification: "Cintura: 78cm\nPunto más estrecho\nA nivel del ombligo"
   },
   {
     id: 4,
-    x: 50,
-    y: 65,
+    x: 20,
+    y: 60,
     specification: "Cadera: 102cm\nPunto más ancho\nA nivel de los glúteos"
-  },
-  {
-    id: 5,
-    x: 30,
-    y: 80,
-    specification: "Largo manga: 62cm\nDesde hombro hasta muñeca\nBrazo ligeramente doblado"
-  },
-  {
-    id: 6,
-    x: 70,
-    y: 80,
-    specification: "Largo total: 165cm\nDesde hombro hasta tobillo\nCon zapatos puestos"
   }
 ];
 
@@ -99,13 +87,35 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
   }, [points, activePoint, addPoint, cancelPointEdit, setActivePointId]);
 
   const handlePointClick = useCallback((id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
     if (e.ctrlKey) {
-      e.stopPropagation();
       removePoint(id);
-    } else {
-      setActivePointId(id);
+      return;
     }
-  }, [removePoint, setActivePointId]);
+    
+    const pointToEdit = points.find(p => p.id === id);
+    
+    // Si es el mismo punto, alternamos la visibilidad del modal
+    if (activePoint?.id === id) {
+      if (pointToEdit?.specification) {
+        // Si ya tiene especificación, alternar entre mostrar/ocultar el modal
+        if (tempSpecification === '') {
+          setTempSpecification(pointToEdit.specification);
+        } else {
+          cancelPointEdit();
+        }
+      }
+    } else {
+      // Si es un punto diferente, lo activamos y cargamos su especificación si existe
+      setActivePointId(id);
+      if (pointToEdit?.specification) {
+        setTempSpecification(pointToEdit.specification);
+      } else {
+        setTempSpecification('');
+      }
+    }
+  }, [removePoint, setActivePointId, points, activePoint, tempSpecification, cancelPointEdit, setTempSpecification]);
 
   const handleSaveSpecification = useCallback(() => {
     if (activePoint) {
@@ -114,9 +124,21 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
   }, [activePoint, tempSpecification, updatePointSpec]);
 
   const handlePointSelect = useCallback((point: Point) => {
+    // Si el punto ya está activo, no hacemos nada para evitar parpadeos
+    if (activePoint?.id === point.id) return;
+    
+    // Establecer el punto activo
     setActivePointId(point.id);
+    
+    // Cargar la especificación del punto seleccionado
+    if (point.specification) {
+      setTempSpecification(point.specification);
+    } else {
+      setTempSpecification('');
+    }
+    
     // Aquí podrías agregar lógica para hacer scroll a la vista
-  }, [setActivePointId]);
+  }, [activePoint, setActivePointId, setTempSpecification]);
 
   const getPointNumber = useCallback((point: Point) => {
     return points.findIndex(p => p.id === point.id) + 1;
@@ -203,7 +225,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
                       />
                     ))}
                     
-                    {activePoint && !activePoint.specification && (
+                    {activePoint && (
                       <SpecificationModal
                         point={activePoint}
                         tempSpecification={tempSpecification}
@@ -211,6 +233,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
                         onSave={handleSaveSpecification}
                         onCancel={cancelPointEdit}
                         pointNumber={getPointNumber(activePoint)}
+                        isEditing={!!activePoint.specification}
                       />
                     )}
                   </div>

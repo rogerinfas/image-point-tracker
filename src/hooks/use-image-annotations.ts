@@ -76,6 +76,10 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
     return points.find(point => point.id === activePointId) || null;
   }, [points, activePointId]);
 
+  const getPointNumber = useCallback((point: Point) => {
+    return points.findIndex(p => p.id === point.id) + 1;
+  }, [points]);
+
   return {
     points,
     activePoint: getActivePoint(),
@@ -86,5 +90,6 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
     updatePointSpec,
     cancelPointEdit,
     setActivePointId,
+    getPointNumber,
   };
 }

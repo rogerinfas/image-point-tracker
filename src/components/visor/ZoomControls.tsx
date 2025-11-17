@@ -1,16 +1,30 @@
 import { Button } from "@/components/ui/button";
 
 interface ZoomControlsProps {
-  onZoomIn: () => void;
-  onZoomOut: () => void;
+  onZoomIn: (step?: number) => void;
+  onZoomOut: (step?: number) => void;
   onReset: () => void;
 }
 
 export function ZoomControls({ onZoomIn, onZoomOut, onReset }: ZoomControlsProps) {
+  const handleZoomIn = () => {
+    onZoomIn(0.2);
+  };
+
+  const handleZoomOut = () => {
+    onZoomOut(0.2);
+  };
+
+  const handleReset = () => {
+    if (typeof onReset === 'function') {
+      onReset();
+    }
+  };
+
   return (
     <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
       <Button
-        onClick={onZoomIn}
+        onClick={handleZoomIn}
         className="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
         title="Acercar"
         variant="ghost"
@@ -32,7 +46,7 @@ export function ZoomControls({ onZoomIn, onZoomOut, onReset }: ZoomControlsProps
         </svg>
       </Button>
       <Button
-        onClick={onZoomOut}
+        onClick={handleZoomOut}
         className="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
         title="Alejar"
         variant="ghost"
@@ -53,7 +67,7 @@ export function ZoomControls({ onZoomIn, onZoomOut, onReset }: ZoomControlsProps
         </svg>
       </Button>
       <Button
-        onClick={onReset}
+        onClick={handleReset}
         className="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
         title="Reiniciar"
         variant="ghost"

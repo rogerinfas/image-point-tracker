@@ -122,6 +122,8 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
     return points.findIndex(p => p.id === point.id) + 1;
   }, [points]);
 
+  // Funciones de zoom movidas dentro del render del TransformWrapper
+
   return (
     <div className="w-full h-full flex">
       <div className="flex-1 relative">
@@ -131,62 +133,91 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
           maxScale={3}
           wheel={{ step: 0.1 }}
           doubleClick={{ disabled: false }}
+          onZoom={(ref) => {
+            // Asegurarse de que la escala sea un número válido
+            const scale = parseFloat(ref.state.scale.toFixed(2));
+            if (isNaN(scale)) {
+              // Usar el elemento raíz del transformador como respaldo
+              const target = document.querySelector('.react-transform-element') as HTMLElement;
+              if (target) {
+                ref.zoomToElement(target, 1, 0);
+              } else {
+                ref.resetTransform(300, 'easeOut');
+              }
+            }
+          }}
         >
-          {({ zoomIn, zoomOut, resetTransform }) => (
-            <div className="relative w-full h-full">
-              <ZoomControls 
-                onZoomIn={zoomIn} 
-                onZoomOut={zoomOut} 
-                onReset={resetTransform} 
-              />
-              
-              <TransformComponent
-                wrapperClass="w-full h-full"
-                contentClass="w-full h-full"
-                wrapperStyle={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: 'var(--background)'
-                }}
-              >
-                <div 
-                  ref={imageRef}
-                  className="relative w-full h-full flex items-center justify-center cursor-crosshair"
-                  onDoubleClick={handleImageDoubleClick}
+          {({ zoomIn, zoomOut, resetTransform }) => {
+            const handleZoomIn = (step: number = 0.2) => {
+              const newScale = Math.min(3, 1 + step);
+              zoomIn(step, 100);
+            };
+
+            const handleZoomOut = (step: number = 0.2) => {
+              const newScale = Math.max(0.5, 1 - step);
+              zoomOut(step, 100);
+            };
+
+            const handleReset = () => {
+              resetTransform(300, 'easeOut');
+            };
+
+            return (
+              <div className="relative w-full h-full">
+                <ZoomControls 
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onReset={handleReset}
+                />
+                
+                <TransformComponent
+                  wrapperClass="w-full h-full"
+                  contentClass="w-full h-full"
+                  wrapperStyle={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'var(--background)'
+                  }}
                 >
-                  <Image
-                    src="/image.png"
-                    alt="Imagen de ejemplo"
-                    width={1920}
-                    height={1080}
-                    className="max-w-full max-h-full object-contain select-none pointer-events-none"
-                    priority
-                  />
-                  
-                  {points.map((point) => (
-                    <PointMarker
-                      key={point.id}
-                      point={point}
-                      isActive={point.id === activePoint?.id}
-                      onClick={handlePointClick}
-                      pointNumber={getPointNumber(point)}
+                  <div 
+                    ref={imageRef}
+                    className="relative w-full h-full flex items-center justify-center cursor-crosshair"
+                    onDoubleClick={handleImageDoubleClick}
+                  >
+                    <Image
+                      src="/image.png"
+                      alt="Imagen de ejemplo"
+                      width={1920}
+                      height={1080}
+                      className="max-w-full max-h-full object-contain select-none pointer-events-none"
+                      priority
                     />
-                  ))}
-                  
-                  {activePoint && !activePoint.specification && (
-                    <SpecificationModal
-                      point={activePoint}
-                      tempSpecification={tempSpecification}
-                      onSpecificationChange={setTempSpecification}
-                      onSave={handleSaveSpecification}
-                      onCancel={cancelPointEdit}
-                      pointNumber={getPointNumber(activePoint)}
-                    />
-                  )}
-                </div>
-              </TransformComponent>
-            </div>
-          )}
+                    
+                    {points.map((point) => (
+                      <PointMarker
+                        key={point.id}
+                        point={point}
+                        isActive={point.id === activePoint?.id}
+                        onClick={handlePointClick}
+                        pointNumber={getPointNumber(point)}
+                      />
+                    ))}
+                    
+                    {activePoint && !activePoint.specification && (
+                      <SpecificationModal
+                        point={activePoint}
+                        tempSpecification={tempSpecification}
+                        onSpecificationChange={setTempSpecification}
+                        onSave={handleSaveSpecification}
+                        onCancel={cancelPointEdit}
+                        pointNumber={getPointNumber(activePoint)}
+                      />
+                    )}
+                  </div>
+                </TransformComponent>
+              </div>
+            );
+          }}
         </TransformWrapper>
       </div>
 

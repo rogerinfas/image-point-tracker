@@ -10,7 +10,7 @@ interface PointMarkerProps {
 export function PointMarker({ point, isActive, onClick, pointNumber }: PointMarkerProps) {
   return (
     <div
-      className={`absolute w-4 h-4 rounded-full border-2 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all ${
+      className={`absolute w-6 h-6 flex items-center justify-center rounded-full border-2 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all ${
         isActive
           ? 'bg-primary border-primary shadow-lg scale-125 z-20'
           : 'bg-background border-primary hover:scale-110 z-10'
@@ -20,9 +20,11 @@ export function PointMarker({ point, isActive, onClick, pointNumber }: PointMark
         top: `${point.y}%`,
       }}
       onClick={(e) => onClick(point.id, e)}
-      title={isActive ? "Ctrl+Click para cancelar" : "Ctrl+Click para eliminar"}
+      title={isActive ? "Ctrl+Click para cancelar" : `Punto ${pointNumber} - Ctrl+Click para eliminar`}
     >
-      <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-primary bg-background px-1 rounded shadow-sm whitespace-nowrap">
+      <span className={`text-xs font-bold ${
+        isActive ? 'text-primary-foreground' : 'text-primary'
+      }`}>
         {pointNumber}
       </span>
     </div>

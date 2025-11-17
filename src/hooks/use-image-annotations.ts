@@ -12,17 +12,20 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
   const [activePointId, setActivePointId] = useState<number | null>(null);
   const [tempSpecification, setTempSpecification] = useState("");
 
+  const roundToTwoDecimals = (num: number): number => {
+    return parseFloat(num.toFixed(2));
+  };
+
   const addPoint = useCallback((x: number, y: number) => {
     const newPoint: Point = {
-      id: Date.now() + Math.random(),
-      x: Math.max(0, Math.min(100, x)),
-      y: Math.max(0, Math.min(100, y)),
+      id: Date.now(),
+      x: roundToTwoDecimals(Math.max(0, Math.min(100, x))),
+      y: roundToTwoDecimals(Math.max(0, Math.min(100, y)))
     };
-    
     setPoints(prev => [...prev, newPoint]);
     setActivePointId(newPoint.id);
-    return newPoint;
-  }, []);
+    setTempSpecification('');
+  }, [setActivePointId, setTempSpecification]);
 
   const removePoint = useCallback((id: number) => {
     setPoints(prev => prev.filter(point => point.id !== id));
@@ -42,6 +45,20 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
     );
     setActivePointId(null);
     setTempSpecification("");
+  }, []);
+
+  const updatePointPosition = useCallback((id: number, x: number, y: number) => {
+    setPoints(prev => 
+      prev.map(point => 
+        point.id === id 
+          ? { 
+              ...point, 
+              x: roundToTwoDecimals(Math.max(0, Math.min(100, x))), 
+              y: roundToTwoDecimals(Math.max(0, Math.min(100, y))) 
+            }
+          : point
+      )
+    );
   }, []);
 
   const cancelPointEdit = useCallback(() => {

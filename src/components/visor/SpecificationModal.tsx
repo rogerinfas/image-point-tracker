@@ -10,6 +10,7 @@ interface SpecificationModalProps {
   onSave: () => void;
   onCancel: () => void;
   pointNumber: number;
+  isEditing?: boolean;
 }
 
 export function SpecificationModal({ 
@@ -18,12 +19,12 @@ export function SpecificationModal({
   onSpecificationChange, 
   onSave, 
   onCancel,
-  pointNumber
+  pointNumber,
+  isEditing = false
 }: SpecificationModalProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    // Auto-ajustar altura del textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(
@@ -33,30 +34,50 @@ export function SpecificationModal({
     }
   }, [tempSpecification]);
 
+  const handleModalClick = (e: React.MouseEvent) => {
+    // Prevenir la propagación del evento
+    e.stopPropagation();
+  };
+
+  const handleTextareaDoubleClick = (e: React.MouseEvent) => {
+    // Prevenir el zoom al hacer doble clic en el textarea
+    e.stopPropagation();
+  };
+
+  const handleTextareaClick = (e: React.MouseEvent) => {
+    // Permitir la interacción normal con el textarea
+    e.stopPropagation();
+  };
+
   return (
     <div 
-      className="absolute bg-background border border-border rounded-lg shadow-lg p-2 min-w-64 z-30"
+      className="absolute bg-background border border-border rounded-lg shadow-lg p-2 min-w-85 z-30"
       style={{
         left: `${point.x}%`,
         top: `${point.y + 3}%`,
         transform: 'translateX(-50%)',
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleModalClick}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-2 h-2 rounded-full bg-primary" />
         <span className="text-xs font-medium text-muted-foreground">
-          Punto #{pointNumber}
+          {isEditing ? 'Editando' : 'Nueva'} especificación #{pointNumber}
         </span>
       </div>
 
       <div className="flex items-start gap-2">
-        <div className="flex-1 relative">
+        <div className="flex-1 relative border border-border rounded-md bg-background">
           <textarea
             ref={textareaRef}
             placeholder="Agregar un comentario..."
             value={tempSpecification}
-            onChange={(e) => onSpecificationChange(e.target.value)}
+            onChange={(e) => {
+              onSpecificationChange(e.target.value);
+              e.stopPropagation();
+            }}
+            onMouseDown={handleTextareaClick}
+            onDoubleClick={handleTextareaDoubleClick}
             className="w-full px-2 py-1 text-sm bg-transparent border-0 outline-none placeholder:text-muted-foreground/60 resize-none overflow-hidden"
             autoFocus
             rows={1}
@@ -82,12 +103,9 @@ export function SpecificationModal({
           <Button
             size="sm"
             variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSave();
-            }}
+            onClick={onSave}
             className="h-6 w-6 p-0 rounded hover:bg-primary/10 flex-shrink-0"
-            title="Guardar (Enter)"
+            title={isEditing ? 'Actualizar (Enter)' : 'Guardar (Enter)'}
           >
             <svg
               className="w-3 h-3"

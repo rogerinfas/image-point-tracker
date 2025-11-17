@@ -1,332 +1,201 @@
 "use client";
 
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { useState, useRef } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { useRef, useCallback } from "react";
+import { MessageSquare } from "lucide-react";
+import { useImageAnnotations, type Point } from "@/hooks/use-image-annotations";
+import { PointMarker } from "./PointMarker";
+import { SpecificationModal } from "./SpecificationModal";
+import { ZoomControls } from "./ZoomControls";
+import { SidePanel } from "./SidePanel";
 
-interface Point {
-  id: number;
-  x: number;
-  y: number;
-  specification?: string;
-}
+const SEED_POINTS: Point[] = [
+  {
+    id: 1,
+    x: 25,
+    y: 30,
+    specification: "Pecho: 95cm\nContorno completo del pecho\nTomar con cinta métrica horizontal"
+  },
+  {
+    id: 2,
+    x: 75,
+    y: 30,
+    specification: "Espalda: 92cm\nAncho de espalda\nMedir de hombro a hombro"
+  },
+  {
+    id: 3,
+    x: 50,
+    y: 45,
+    specification: "Cintura: 78cm\nPunto más estrecho\nA nivel del ombligo"
+  },
+  {
+    id: 4,
+    x: 50,
+    y: 65,
+    specification: "Cadera: 102cm\nPunto más ancho\nA nivel de los glúteos"
+  },
+  {
+    id: 5,
+    x: 30,
+    y: 80,
+    specification: "Largo manga: 62cm\nDesde hombro hasta muñeca\nBrazo ligeramente doblado"
+  },
+  {
+    id: 6,
+    x: 70,
+    y: 80,
+    specification: "Largo total: 165cm\nDesde hombro hasta tobillo\nCon zapatos puestos"
+  }
+];
 
 interface ImageDisplayProps {
   showSpecificationsPanel?: boolean;
 }
 
 export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayProps) {
-  const [points, setPoints] = useState<Point[]>([]);
-  const [scale, setScale] = useState(1);
-  const [activePointId, setActivePointId] = useState<number | null>(null);
-  const [tempSpecification, setTempSpecification] = useState("");
   const imageRef = useRef<HTMLDivElement>(null);
+  
+  const {
+    points,
+    activePoint,
+    tempSpecification,
+    setTempSpecification,
+    addPoint,
+    removePoint,
+    updatePointSpec,
+    cancelPointEdit,
+    setActivePointId
+  } = useImageAnnotations(SEED_POINTS);
 
-  const handleImageDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleImageDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current) return;
-    
+
     const rect = imageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     // Verificar si ya existe un punto cerca de esta posición
     const minDistance = 1.5; // Distancia mínima en porcentaje
-    const existingPoint = points.find(point => {
+    const existingPoint = points.find((point) => {
       const distance = Math.sqrt(
         Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2)
       );
       return distance < minDistance;
     });
-    
+
     // Si ya existe un punto cerca, no crear uno nuevo
     if (existingPoint) {
+      setActivePointId(existingPoint.id);
       return;
     }
-    
-    // Si hay un punto activo sin especificación, eliminarlo
-    if (activePointId) {
-      // Buscar el punto activo para verificar si tiene especificación
-      const activePoint = points.find(point => point.id === activePointId);
-      // Solo eliminar si no tiene especificación (es temporal)
-      if (!activePoint?.specification) {
-        setPoints(prev => prev.filter(point => point.id !== activePointId));
-      }
+
+    // Si hay un punto activo sin especificación, cancelarlo primero
+    if (activePoint && !activePoint.specification) {
+      cancelPointEdit();
     }
-    
-    const newPoint: Point = {
-      id: Date.now(),
-      x: Math.max(0, Math.min(100, x)),
-      y: Math.max(0, Math.min(100, y))
-    };
-    
-    setPoints(prev => [...prev, newPoint]);
-    setActivePointId(newPoint.id);
-    setTempSpecification("");
-  };
 
-  const removePoint = (id: number, e: React.MouseEvent) => {
-    if (!e.ctrlKey) return; // Solo permitir eliminar con Ctrl+Click
-    e.stopPropagation();
-    setPoints(prev => prev.filter(point => point.id !== id));
-    if (activePointId === id) {
-      setActivePointId(null);
-      setTempSpecification("");
+    addPoint(x, y);
+  }, [points, activePoint, addPoint, cancelPointEdit, setActivePointId]);
+
+  const handlePointClick = useCallback((id: number, e: React.MouseEvent) => {
+    if (e.ctrlKey) {
+      e.stopPropagation();
+      removePoint(id);
+    } else {
+      setActivePointId(id);
     }
-  };
+  }, [removePoint, setActivePointId]);
 
-  const saveSpecification = () => {
-    if (!activePointId) return;
-    
-    setPoints(prev => prev.map(point => 
-      point.id === activePointId 
-        ? { ...point, specification: tempSpecification.trim() || "Sin especificación" }
-        : point
-    ));
-    
-    setActivePointId(null);
-    setTempSpecification("");
-  };
+  const handleSaveSpecification = useCallback(() => {
+    if (activePoint) {
+      updatePointSpec(activePoint.id, tempSpecification);
+    }
+  }, [activePoint, tempSpecification, updatePointSpec]);
 
-  const cancelSpecification = () => {
-    if (!activePointId) return;
-    
-    setPoints(prev => prev.filter(point => point.id !== activePointId));
-    setActivePointId(null);
-    setTempSpecification("");
-  };
+  const handlePointSelect = useCallback((point: Point) => {
+    setActivePointId(point.id);
+    // Aquí podrías agregar lógica para hacer scroll a la vista
+  }, [setActivePointId]);
+
+  const getPointNumber = useCallback((point: Point) => {
+    return points.findIndex(p => p.id === point.id) + 1;
+  }, [points]);
 
   return (
     <div className="w-full h-full flex">
       <div className="flex-1 relative">
-      <TransformWrapper
-        initialScale={1}
-        minScale={0.5}
-        maxScale={3}
-        wheel={{ step: 0.1 }}
-        doubleClick={{ disabled: false }}
-      >
-        {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
-          <div className="relative w-full h-full">
-            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-              <button
-                onClick={() => zoomIn()}
-                className="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
-                title="Acercar"
+        <TransformWrapper
+          initialScale={1}
+          minScale={0.5}
+          maxScale={3}
+          wheel={{ step: 0.1 }}
+          doubleClick={{ disabled: false }}
+        >
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <div className="relative w-full h-full">
+              <ZoomControls 
+                onZoomIn={zoomIn} 
+                onZoomOut={zoomOut} 
+                onReset={resetTransform} 
+              />
+              
+              <TransformComponent
+                wrapperClass="w-full h-full"
+                contentClass="w-full h-full"
+                wrapperStyle={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'var(--background)'
+                }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-              </button>
-              <button
-                onClick={() => zoomOut()}
-                className="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
-                title="Alejar"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-              </button>
-              <button
-                onClick={() => resetTransform()}
-                className="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
-                title="Reiniciar"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                  <path d="M3 3v5h5"></path>
-                </svg>
-              </button>
+                <div 
+                  ref={imageRef}
+                  className="relative w-full h-full flex items-center justify-center cursor-crosshair"
+                  onDoubleClick={handleImageDoubleClick}
+                >
+                  <Image
+                    src="/image.png"
+                    alt="Imagen de ejemplo"
+                    width={1920}
+                    height={1080}
+                    className="max-w-full max-h-full object-contain select-none pointer-events-none"
+                    priority
+                  />
+                  
+                  {points.map((point) => (
+                    <PointMarker
+                      key={point.id}
+                      point={point}
+                      isActive={point.id === activePoint?.id}
+                      onClick={handlePointClick}
+                      pointNumber={getPointNumber(point)}
+                    />
+                  ))}
+                  
+                  {activePoint && !activePoint.specification && (
+                    <SpecificationModal
+                      point={activePoint}
+                      tempSpecification={tempSpecification}
+                      onSpecificationChange={setTempSpecification}
+                      onSave={handleSaveSpecification}
+                      onCancel={cancelPointEdit}
+                      pointNumber={getPointNumber(activePoint)}
+                    />
+                  )}
+                </div>
+              </TransformComponent>
             </div>
-            <TransformComponent 
-              wrapperClass="w-full h-full" 
-              contentClass="w-full h-full"
-              wrapperStyle={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'var(--background)'
-              }}
-            >
-              <div 
-                ref={imageRef}
-                className="relative w-full h-full flex items-center justify-center cursor-crosshair"
-                onDoubleClick={handleImageDoubleClick}
-              >
-                <Image
-                  src="/image.png"
-                  alt="Imagen de ejemplo"
-                  width={1920}
-                  height={1080}
-                  className="max-w-full max-h-full object-contain select-none pointer-events-none"
-                  priority
-                />
-                {points.map((point) => {
-                  const isActive = point.id === activePointId;
-                  return (
-                    <div key={point.id}>
-                      {/* Marcador del punto */}
-                      <div
-                        className={`absolute w-4 h-4 rounded-full border-2 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all ${
-                          isActive 
-                            ? 'bg-primary border-primary shadow-lg scale-125 z-20' 
-                            : 'bg-background border-primary hover:scale-110 z-10'
-                        }`}
-                        style={{
-                          left: `${point.x}%`,
-                          top: `${point.y}%`
-                        }}
-                        onClick={(e) => removePoint(point.id, e)}
-                        title={isActive ? "Ctrl+Click para cancelar" : "Ctrl+Click para eliminar"}
-                      >
-                        <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-primary bg-background px-1 rounded shadow-sm whitespace-nowrap">
-                          {point.specification ? points.filter(p => p.specification).findIndex(p => p.id === point.id) + 1 : points.indexOf(point) + 1}
-                        </span>
-                      </div>
-                      
-                      {isActive && (
-                        <div 
-                          className="absolute bg-background border border-border rounded-lg shadow-lg p-2 min-w-64 z-30"
-                          style={{
-                            left: `${point.x}%`,
-                            top: `${point.y + 3}%`,
-                            transform: 'translateX(-50%)'
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-center gap-2 mb-2"
-                               onClick={(e) => e.stopPropagation()}>
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                            <span className="text-xs font-medium text-muted-foreground">Punto #{points.findIndex(p => p.id === point.id) + 1}</span>
-                          </div>
-                          
-                          <div className="flex items-start gap-2"
-                               onClick={(e) => e.stopPropagation()}>
-                            <div className="flex-1 relative">
-                              <textarea
-                                placeholder="Agregar un comentario..."
-                                value={tempSpecification}
-                                onChange={(e) => setTempSpecification(e.target.value)}
-                                className="w-full px-2 py-1 text-sm bg-transparent border-0 outline-none placeholder:text-muted-foreground/60 resize-none overflow-hidden"
-                                onClick={(e) => e.stopPropagation()}
-                                autoFocus
-                                rows={1}
-                                style={{
-                                  minHeight: '24px',
-                                  maxHeight: '120px',
-                                  resize: 'none'
-                                }}
-                                onInput={(e) => {
-                                  const target = e.target as HTMLTextAreaElement;
-                                  target.style.height = 'auto';
-                                  target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    saveSpecification();
-                                  }
-                                  if (e.key === 'Escape') {
-                                    e.preventDefault();
-                                    cancelSpecification();
-                                  }
-                                }}
-                              />
-                            </div>
-                            
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  saveSpecification();
-                                }}
-                                className="h-6 w-6 p-0 rounded hover:bg-primary/10 flex-shrink-0"
-                                title="Guardar (Enter)"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </Button>
-                              
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cancelSpecification();
-                                }}
-                                className="h-6 w-6 p-0 rounded hover:bg-destructive/10 flex-shrink-0"
-                                title="Cancelar (Esc)"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </TransformComponent>
-          </div>
-        )}
-      </TransformWrapper>
+          )}
+        </TransformWrapper>
       </div>
-      
+
       {/* Panel lateral derecho */}
       {showSpecificationsPanel && (
-        <div className="w-80 bg-background border-l border-border">
-          <div className="p-4 border-b border-border">
-            <h3 className="font-semibold text-foreground flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Especificaciones ({points.filter(p => p.specification).length})
-            </h3>
-          </div>
-          
-          <div className="h-full overflow-y-auto">
-            {points.filter(p => p.specification).length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No hay especificaciones aún</p>
-                <p className="text-xs mt-1">Haz clic en la imagen para añadir</p>
-              </div>
-            ) : (
-              <div className="p-4 space-y-4">
-                {points
-                  .filter(point => point.specification)
-                  .map((point, index) => (
-                    <div key={point.id} className="p-3 rounded-lg bg-muted/30 relative">
-                      <div className="absolute -top-2 -left-2 w-6 h-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                        {index + 1}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm mb-2">
-                        <span className="font-medium text-primary">Usuario</span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date().toLocaleDateString('es-ES', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                      <div className="text-sm text-foreground whitespace-pre-wrap break-words">
-                        {point.specification}
-                      </div>
-                    </div>
-                  ))
-                }
-              </div>
-            )}
-          </div>
-        </div>
+        <SidePanel 
+          points={points.filter(p => p.specification)} 
+          onPointSelect={handlePointSelect} 
+        />
       )}
     </div>
   );

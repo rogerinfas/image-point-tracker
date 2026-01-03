@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useRef, useCallback } from "react";
-import { MessageSquare } from "lucide-react";
 import { useImageAnnotations, type Point } from "@/hooks/use-image-annotations";
 import { useSpecificationLogger } from "@/hooks/use-specification-logger";
 import { PointMarker } from "./PointMarker";
@@ -11,40 +10,13 @@ import { SpecificationModal } from "./SpecificationModal";
 import { ZoomControls } from "./ZoomControls";
 import { SidePanel } from "./SidePanel";
 
-const SEED_POINTS: Point[] = [
-  {
-    id: 1,
-    x: 25,
-    y: 30,
-    specification: "Pecho: 95cm\nContorno completo del pecho\nTomar con cinta métrica horizontal"
-  },
-  {
-    id: 2,
-    x: 77,
-    y: 30,
-    specification: "Espalda: 92cm\nAncho de espalda\nMedir de hombro a hombro"
-  },
-  {
-    id: 3,
-    x: 80,
-    y: 62,
-    specification: "Cintura: 78cm\nPunto más estrecho\nA nivel del ombligo"
-  },
-  {
-    id: 4,
-    x: 20,
-    y: 60,
-    specification: "Cadera: 102cm\nPunto más ancho\nA nivel de los glúteos"
-  }
-];
-
 interface ImageDisplayProps {
   showSpecificationsPanel?: boolean;
 }
 
 export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayProps) {
   const imageRef = useRef<HTMLDivElement>(null);
-  
+
   const {
     points,
     activePoint,
@@ -56,7 +28,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
     cancelPointEdit,
     setActivePointId,
     getPointNumber,
-  } = useImageAnnotations(SEED_POINTS);
+  } = useImageAnnotations([]);
 
   const { logSpecifications } = useSpecificationLogger(points);
 
@@ -92,14 +64,14 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
 
   const handlePointClick = useCallback((id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (e.ctrlKey) {
       removePoint(id);
       return;
     }
-    
+
     const pointToEdit = points.find(p => p.id === id);
-    
+
     // Si es el mismo punto, alternamos la visibilidad del modal
     if (activePoint?.id === id) {
       if (pointToEdit?.specification) {
@@ -130,17 +102,17 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
   const handlePointSelect = useCallback((point: Point) => {
     // Si el punto ya está activo, no hacemos nada para evitar parpadeos
     if (activePoint?.id === point.id) return;
-    
+
     // Establecer el punto activo
     setActivePointId(point.id);
-    
+
     // Cargar la especificación del punto seleccionado
     if (point.specification) {
       setTempSpecification(point.specification);
     } else {
       setTempSpecification('');
     }
-    
+
     // Aquí podrías agregar lógica para hacer scroll a la vista
   }, [activePoint, setActivePointId, setTempSpecification]);
 
@@ -187,12 +159,12 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
 
             return (
               <div className="relative w-full h-full">
-                <ZoomControls 
+                <ZoomControls
                   onZoomIn={handleZoomIn}
                   onZoomOut={handleZoomOut}
                   onReset={handleReset}
                 />
-                
+
                 <TransformComponent
                   wrapperClass="w-full h-full"
                   contentClass="w-full h-full"
@@ -202,7 +174,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
                     backgroundColor: 'var(--background)'
                   }}
                 >
-                  <div 
+                  <div
                     ref={imageRef}
                     className="relative w-full h-full flex items-center justify-center cursor-crosshair"
                     onDoubleClick={handleImageDoubleClick}
@@ -215,7 +187,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
                       className="max-w-full max-h-full object-contain select-none pointer-events-none"
                       priority
                     />
-                    
+
                     {points.map((point) => (
                       <PointMarker
                         key={point.id}
@@ -225,7 +197,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
                         pointNumber={getPointNumber(point)}
                       />
                     ))}
-                    
+
                     {activePoint && (
                       <SpecificationModal
                         point={activePoint}
@@ -247,15 +219,15 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
 
       {/* Panel lateral derecho */}
       {showSpecificationsPanel && (
-        <SidePanel 
-          points={points.filter(p => p.specification)} 
-          onPointSelect={handlePointSelect} 
+        <SidePanel
+          points={points.filter(p => p.specification)}
+          onPointSelect={handlePointSelect}
         />
       )}
-      
+
       {/* Botón para registrar especificaciones */}
       <div className="fixed bottom-4 right-4 z-50">
- <button
+        <button
           onClick={logSpecifications}
           className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg shadow-lg flex items-center gap-2"
         >

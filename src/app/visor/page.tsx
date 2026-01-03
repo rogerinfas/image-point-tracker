@@ -13,8 +13,8 @@ export default function VisorPage() {
       {/* Header */}
       <div className="h-16 flex items-center justify-between px-6 bg-card border-b">
         <h1 className="text-2xl font-bold">Visor de Imágenes</h1>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
           onClick={() => setShowSpecifications(!showSpecifications)}
           title={showSpecifications ? "Ocultar especificaciones" : "Mostrar especificaciones"}
@@ -25,12 +25,9 @@ export default function VisorPage() {
 
       {/* Contenido principal */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Área de la imagen */}
-        <div className={`${showSpecifications ? 'w-full' : 'w-full'} h-full transition-all duration-300`}>
+        <div className="w-full h-full transition-all duration-300">
           <ImageDisplay showSpecificationsPanel={showSpecifications} />
         </div>
-
-        {/* Panel de especificaciones eliminado - ahora está integrado */}
       </div>
     </div>
   )

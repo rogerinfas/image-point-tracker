@@ -129,7 +129,7 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
           minScale={0.5}
           maxScale={3}
           wheel={{ step: 0.1 }}
-          doubleClick={{ disabled: false }}
+          doubleClick={{ disabled: true }}
           onZoom={(ref) => {
             // Asegurarse de que la escala sea un número válido
             const scale = parseFloat(ref.state.scale.toFixed(2));

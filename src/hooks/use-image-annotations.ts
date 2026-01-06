@@ -50,7 +50,7 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
     setPoints(prev => [...prev, newPoint]);
     setActivePointId(newPoint.id);
     setTempSpecification('');
-  }, [setActivePointId, setTempSpecification]);
+  }, []);
 
   /**
    * Elimina un punto por su ID
@@ -70,13 +70,17 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
    * @param {string} specification - Nuevo texto de especificación
    */
   const updatePointSpec = useCallback((id: number, specification: string) => {
-    setPoints(prev => 
-      prev.map(point => 
-        point.id === id 
-          ? { ...point, specification: specification.trim() || "Sin especificación" }
-          : point
-      )
-    );
+    const trimmedSpec = specification.trim();
+    // Solo actualizar si hay contenido válido
+    if (trimmedSpec) {
+      setPoints(prev => 
+        prev.map(point => 
+          point.id === id 
+            ? { ...point, specification: trimmedSpec }
+            : point
+        )
+      );
+    }
     setActivePointId(null);
     setTempSpecification("");
   }, []);
@@ -148,12 +152,10 @@ export function useImageAnnotations(initialPoints: Point[] = []) {
   }), [
     points,
     tempSpecification,
-    setTempSpecification,
     addPoint,
     removePoint,
     updatePointSpec,
     cancelPointEdit,
-    setActivePointId,
     getPointNumber,
     getActivePoint
   ]);

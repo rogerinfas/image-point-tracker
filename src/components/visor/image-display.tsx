@@ -95,9 +95,14 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
 
   const handleSaveSpecification = useCallback(() => {
     if (activePoint) {
+      // Si el comentario está vacío o solo tiene espacios, cancelar en lugar de guardar
+      if (!tempSpecification.trim()) {
+        cancelPointEdit();
+        return;
+      }
       updatePointSpec(activePoint.id, tempSpecification);
     }
-  }, [activePoint, tempSpecification, updatePointSpec]);
+  }, [activePoint, tempSpecification, updatePointSpec, cancelPointEdit]);
 
   const handlePointSelect = useCallback((point: Point) => {
     // Si el punto ya está activo, no hacemos nada para evitar parpadeos
@@ -144,12 +149,10 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
         >
           {({ zoomIn, zoomOut, resetTransform }) => {
             const handleZoomIn = (step: number = 0.2) => {
-              const newScale = Math.min(3, 1 + step);
               zoomIn(step, 100);
             };
 
             const handleZoomOut = (step: number = 0.2) => {
-              const newScale = Math.max(0.5, 1 - step);
               zoomOut(step, 100);
             };
 

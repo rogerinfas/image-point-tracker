@@ -51,7 +51,7 @@ export function SpecificationModal({
 
   return (
     <div 
-      className="absolute bg-background border border-border rounded-lg shadow-lg p-2 min-w-85 z-30"
+      className="absolute bg-background border border-border rounded-lg shadow-lg p-2 min-w-[340px] z-30"
       style={{
         left: `${point.x}%`,
         top: `${point.y + 3}%`,

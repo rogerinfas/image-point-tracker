@@ -4,7 +4,6 @@ import Image from "next/image";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useRef, useCallback } from "react";
 import { useImageAnnotations, type Point } from "@/hooks/use-image-annotations";
-import { useSpecificationLogger } from "@/hooks/use-specification-logger";
 import { PointMarker } from "./PointMarker";
 import { SpecificationModal } from "./SpecificationModal";
 import { ZoomControls } from "./ZoomControls";
@@ -29,8 +28,6 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
     setActivePointId,
     getPointNumber,
   } = useImageAnnotations([]);
-
-  const { logSpecifications } = useSpecificationLogger(points);
 
   const handleImageDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageRef.current) return;
@@ -227,21 +224,6 @@ export function ImageDisplay({ showSpecificationsPanel = true }: ImageDisplayPro
           onPointSelect={handlePointSelect}
         />
       )}
-
-      {/* Botón para registrar especificaciones */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          onClick={logSpecifications}
-          className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg shadow-lg flex items-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Registrar especificaciones
-        </button>
-      </div>
     </div>
   );
 }
